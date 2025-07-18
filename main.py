@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -36,7 +37,16 @@ def get_book(book_id: int):
 
     raise HTTPException(status_code=404, detail="Книга не найдена")
 
+class NewBook(BaseModel):
+    title: str
+    author: str
 
-@app.post("/books")
-def create_book():
-    
+@app.post("/books", tags=["Книги"])
+def create_book(new_book: NewBook):
+    books.append({
+        "id": len(books) + 1,
+        "title": new_book.title,
+        "author": new_book.author
+
+    })
+    return {"success": True, "message": "Книга успешно добавлена"}
