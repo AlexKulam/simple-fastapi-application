@@ -23,6 +23,7 @@ def get_book(book_id: int):
     raise HTTPException(status_code=404, detail="Книга не найдена")
 
 class NewBook(BaseModel):
+    id: str
     title: str
     author: str
 
@@ -34,3 +35,11 @@ def create_book(new_book: NewBook):
         "author": new_book.author
     })
     return {"success": True, "message": "Книга успешно добавлена"}
+
+@app.delete("/books/{book_id}")
+def delete_book(book_id: int):
+    for i, book in enumerate(books):
+        if book["id"] == book_id:
+            books.pop(i)
+            return {"success": True, "message": "Книга удалена"}
+    raise HTTPException(status_code=404, detail="Книга не найдена")

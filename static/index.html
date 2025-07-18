@@ -1,77 +1,82 @@
-<!-- //Frontend написан нейросеть. -->
+<!-- Frontend сгенерирован нейросетью -->
 
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Книги</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; }
-        .book { border-bottom: 1px solid #ccc; margin-bottom: 10px; padding-bottom: 10px; }
-        input, button { margin: 5px 0; padding: 8px; width: 300px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Книги</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    ul { list-style-type: none; padding: 0; }
+    li { margin: 10px 0; }
+    input, button { padding: 5px; margin: 5px 0; }
+  </style>
 </head>
 <body>
-    <h1>Список книг</h1>
+  <h1>Список книг</h1>
 
-    <div id="book-list">
+  <div>
+    <input type="text" id="title" placeholder="Название книги" />
+    <input type="text" id="author" placeholder="Автор" />
+    <button onclick="addBook()">Добавить книгу</button>
+  </div>
 
-    </div>
+  <div>
+    <input type="number" id="deleteId" placeholder="ID для удаления" />
+    <button onclick="removeBook()">Удалить книгу</button>
+  </div>
 
-    <h2>Добавить новую книгу</h2>
-    <input type="text" id="title" placeholder="Название книги">
-    <input type="text" id="author" placeholder="Автор">
-    <button onclick="addBook()">Добавить</button>
+  <ul id="booksList"></ul>
 
-    <h2>Посмотреть книгу по ID</h2>
-    <input type="number" id="bookId" placeholder="ID книги">
-    <button onclick="getBook()">Найти</button>
-    <div id="single-book"></div>
+  <script>
+    async function fetchBooks() {
+      const res = await fetch("http://localhost:8000/books");
+      const books = await res.json();
+      const list = document.getElementById("booksList");
+      list.innerHTML = "";
+      books.forEach(book => {
+        const li = document.createElement("li");
+        li.textContent = `ID: ${book.id}, Название: "${book.title}", Автор: ${book.author}`;
+        list.appendChild(li);
+      });
+    }
 
-    <script>
-        async function fetchBooks() {
-            const res = await fetch('/books');
-            const data = await res.json();
-            const list = document.getElementById('book-list');
-            list.innerHTML = '';
-            data.forEach(book => {
-                list.innerHTML += `
-                    <div class="book">
-                        <strong>${book.title}</strong><br>
-                        Автор: ${book.author} (ID: ${book.id})
-                    </div>
-                `;
-            });
-        }
+    async function addBook() {
+      const title = document.getElementById("title").value;
+      const author = document.getElementById("author").value;
+      if (!title || !author) return alert("Заполните все поля");
 
-        async function addBook() {
-            const title = document.getElementById('title').value;
-            const author = document.getElementById('author').value;
-            await fetch('/books', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, author })
-            });
-            alert('Книга добавлена!');
-            fetchBooks();
-        }
+      await fetch("http://localhost:8000/books", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: "", title, author }) // id генерируется на бэкенде
+      });
 
-        async function getBook() {
-            const id = document.getElementById('bookId').value;
-            const res = await fetch(`/books/${id}`);
-            if (res.ok) {
-                const book = await res.json();
-                document.getElementById('single-book').innerHTML = `
-                    <strong>${book.title}</strong><br>
-                    Автор: ${book.author}
-                `;
-            } else {
-                document.getElementById('single-book').innerHTML = 'Книга не найдена';
-            }
-        }
+      fetchBooks();
+      document.getElementById("title").value = "";
+      document.getElementById("author").value = "";
+    }
 
-        // Загрузка списка книг при старте
+    async function removeBook() {
+      const id = document.getElementById("deleteId").value;
+      if (!id) return alert("Введите ID");
+
+      const res = await fetch(`http://localhost:8000/books/${id}`, {
+        method: "DELETE"
+      });
+
+      if (res.ok) {
         fetchBooks();
-    </script>
+        document.getElementById("deleteId").value = "";
+      } else {
+        const data = await res.json();
+        alert(data.detail || "Ошибка при удалении");
+      }
+    }
+
+    // Загрузка книг при открытии страницы
+    window.onload = fetchBooks;
+  </script>
 </body>
 </html>
